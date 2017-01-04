@@ -35,21 +35,24 @@ object WordCount {
 
     // set up the execution environment
     val env = ExecutionEnvironment.getExecutionEnvironment
+    env.setDegreeOfParallelism(2)
 
     // get input data
-    val text = env.fromElements("To be, or not to be,--that is the question:--",
-      "Whether 'tis nobler in the mind to suffer", "The slings and arrows of outrageous fortune",
-      "Or to take arms against a sea of troubles,")
+    //val text = env.fromElements("Far out in the uncharted backwaters of the unfashionable end of the western spiral arm of the Galaxy lies a small unregarded yellow sun. Orbiting this at a distance of roughly ninety-two million miles is an utterly insignificant little blue green planet whose ape-descended life forms are so am")
+    val file: DataSet[String] = env.read
 
-    val counts = text.flatMap { _.toLowerCase.split("\\W+") }
+    val counts: DataSet[(String,Int)] = file.flatMap { _.toLowerCase.split("\\W+") }
       .map { (_, 1) }
-      .groupBy(0)
-      .sum(1)
+      .groupBy(0) //parameter defines the field to group by. the key.
+      .sum(1) //parameter defines the field to aggregate. the value.
+      .filter { _._2 > 0}
 
     // emit result
     counts.print()
+    counts.writeAsCsv("filtered-counts") //saves one file per degree of parallelism in the execution environment
+
 
     // execute program
-    env.execute("WordCount Example")
+    env.execute("Filtered WordCount Example")
   }
 }
